@@ -23,11 +23,17 @@ $ErrorActionPreference = "Stop"
 # 脚本所在目录（本地开发时在 toolkit/，打包后在 tarball 根目录）
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# 自动检测 skills 源目录
-if (Test-Path (Join-Path $ScriptDir "contract-atoms")) {
-    $SkillsSrc = $ScriptDir
-} elseif (Test-Path (Join-Path (Split-Path -Parent $ScriptDir) "skills")) {
+# 自动检测 skills 源目录：
+#   本地开发：install.sh 在 toolkit/，skills 在 ../skills/（优先检测）
+#   打包产物：install.sh 与 contract-*/SKILL.md 同级（tarball 布局）
+$ParentSkills = Join-Path (Split-Path -Parent $ScriptDir) "skills/contract-atoms"
+$TarballSkill = Join-Path $ScriptDir "contract-atoms/SKILL.md"
+$TarballBin = Join-Path $ScriptDir "contract-atoms/scripts/bin"
+
+if (Test-Path $ParentSkills) {
     $SkillsSrc = Join-Path (Split-Path -Parent $ScriptDir) "skills"
+} elseif ((Test-Path $TarballSkill) -and (Test-Path $TarballBin)) {
+    $SkillsSrc = $ScriptDir
 } else {
     Write-Error "找不到 skills 目录，请在安装包解压目录或项目根目录下运行"
     exit 1

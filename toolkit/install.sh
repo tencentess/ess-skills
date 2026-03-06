@@ -17,12 +17,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 自动检测 skills 源目录：
-#   打包产物：install.sh 与 contract-*/  同级
-#   本地开发：install.sh 在 toolkit/，skills 在 ../skills/
-if [ -d "${SCRIPT_DIR}/contract-atoms" ]; then
-  SKILLS_SRC="$SCRIPT_DIR"
-elif [ -d "${SCRIPT_DIR}/../skills" ]; then
+#   本地开发：install.sh 在 toolkit/，skills 在 ../skills/（优先检测）
+#   打包产物：install.sh 与 contract-*/SKILL.md 同级（tarball 布局）
+if [ -d "${SCRIPT_DIR}/../skills/contract-atoms" ]; then
   SKILLS_SRC="$(cd "${SCRIPT_DIR}/../skills" && pwd)"
+elif [ -f "${SCRIPT_DIR}/contract-atoms/SKILL.md" ] && [ -d "${SCRIPT_DIR}/contract-atoms/scripts/bin" ]; then
+  SKILLS_SRC="$SCRIPT_DIR"
 else
   echo "❌ 找不到 skills 目录，请在安装包解压目录或项目根目录下运行" >&2
   exit 1

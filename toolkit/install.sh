@@ -96,11 +96,27 @@ esac
 
 SKILLS=(contract-atoms contract-review contract-comparison)
 
+# 检测当前平台
+detect_platform() {
+  local os arch
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+  esac
+  echo "${os}-${arch}"
+}
+
+PLATFORM="$(detect_platform)"
+
 echo "📦 安装腾讯电子签合同智能 Skills"
 echo "   目标工具: ${TOOL_NAME}"
 echo "   安装目录: ${DEST_DIR}"
+echo "   当前平台: ${PLATFORM}"
 echo ""
 
+INSTALLED=0
 for skill in "${SKILLS[@]}"; do
   SRC="${SKILLS_SRC}/${skill}"
   if [ ! -d "$SRC" ]; then
@@ -110,17 +126,54 @@ for skill in "${SKILLS[@]}"; do
 
   SKILL_DEST="${DEST_DIR}/${skill}"
   echo "  → 安装 ${skill}..."
-  mkdir -p "$SKILL_DEST"
-  cp -r "$SRC/SKILL.md" "$SKILL_DEST/"
-  cp -r "$SRC/scripts" "$SKILL_DEST/"
+  mkdir -p "${SKILL_DEST}/scripts/bin"
 
-  # 确保二进制文件可执行
-  find "$SKILL_DEST/scripts/bin" -type f 2>/dev/null | xargs chmod +x 2>/dev/null || true
+  # 复制 SKILL.md
+  cp "$SRC/SKILL.md" "$SKILL_DEST/"
+
+  # 复制 run 脚本
+  cp "$SRC/scripts/run.sh" "$SKILL_DEST/scripts/"
   chmod +x "$SKILL_DEST/scripts/run.sh"
+  [ -f "$SRC/scripts/run.ps1" ] && cp "$SRC/scripts/run.ps1" "$SKILL_DEST/scripts/"
+
+  # 复制二进制文件（区分 tarball 平面结构和本地开发的平台子目录结构）
+  BIN_COPIED=0
+  if [ -d "$SRC/scripts/bin/${PLATFORM}" ]; then
+    # 本地开发：bin 按平台子目录组织 (bin/darwin-arm64/xxx)
+    for f in "$SRC/scripts/bin/${PLATFORM}"/*; do
+      [ -f "$f" ] || continue
+      cp "$f" "$SKILL_DEST/scripts/bin/"
+      chmod +x "$SKILL_DEST/scripts/bin/$(basename "$f")"
+      BIN_COPIED=$((BIN_COPIED + 1))
+    done
+  elif ls "$SRC/scripts/bin/"* &>/dev/null; then
+    # tarball：bin 是平面结构 (bin/xxx)
+    for f in "$SRC/scripts/bin/"*; do
+      [ -f "$f" ] || continue
+      cp "$f" "$SKILL_DEST/scripts/bin/"
+      chmod +x "$SKILL_DEST/scripts/bin/$(basename "$f")"
+      BIN_COPIED=$((BIN_COPIED + 1))
+    done
+  fi
+
+  if [ "$BIN_COPIED" -eq 0 ]; then
+    echo "    ⚠ 未找到 ${PLATFORM} 的二进制文件（请先运行 make release）"
+  else
+    echo "    ✅ 复制 ${BIN_COPIED} 个二进制文件"
+    INSTALLED=$((INSTALLED + 1))
+  fi
 done
 
 echo ""
-echo "✅ 安装完成！已安装 ${#SKILLS[@]} 个 skills 到 ${DEST_DIR}"
+if [ "$INSTALLED" -eq 0 ]; then
+  echo "⚠ 安装完成但缺少二进制文件。请先编译："
+  echo ""
+  echo "  cd $(cd "$SCRIPT_DIR" && pwd) && make release"
+  echo ""
+  echo "然后重新运行 install.sh"
+else
+  echo "✅ 安装完成！已安装 ${INSTALLED}/${#SKILLS[@]} 个 skills 到 ${DEST_DIR}"
+fi
 echo ""
 echo "下一步：配置凭证（任选一种方式）："
 echo ""

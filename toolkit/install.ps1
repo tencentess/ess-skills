@@ -59,11 +59,18 @@ switch ($Target) {
 
 $Skills = @("contract-atoms", "contract-review", "contract-comparison")
 
+# 检测当前平台
+$Os = if ($IsLinux) { "linux" } elseif ($IsMacOS) { "darwin" } else { "windows" }
+$Arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq "Arm64") { "arm64" } else { "amd64" }
+$Platform = "$Os-$Arch"
+
 Write-Host "📦 安装腾讯电子签合同智能 Skills"
 Write-Host "   目标工具: $ToolName"
 Write-Host "   安装目录: $DestDir"
+Write-Host "   当前平台: $Platform"
 Write-Host ""
 
+$Installed = 0
 foreach ($skill in $Skills) {
     $Src = Join-Path $SkillsSrc $skill
     if (-not (Test-Path $Src)) {
@@ -73,21 +80,55 @@ foreach ($skill in $Skills) {
 
     $SkillDest = Join-Path $DestDir $skill
     Write-Host "  → 安装 $skill..."
-    New-Item -ItemType Directory -Force -Path $SkillDest | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $SkillDest "scripts/bin") | Out-Null
 
     # 复制 SKILL.md
     Copy-Item (Join-Path $Src "SKILL.md") -Destination $SkillDest -Force
 
-    # 复制 scripts 目录
-    $ScriptsDest = Join-Path $SkillDest "scripts"
-    if (Test-Path $ScriptsDest) {
-        Remove-Item -Recurse -Force $ScriptsDest
+    # 复制 run 脚本
+    Copy-Item (Join-Path $Src "scripts/run.sh") -Destination (Join-Path $SkillDest "scripts/") -Force
+    $Ps1Path = Join-Path $Src "scripts/run.ps1"
+    if (Test-Path $Ps1Path) {
+        Copy-Item $Ps1Path -Destination (Join-Path $SkillDest "scripts/") -Force
     }
-    Copy-Item (Join-Path $Src "scripts") -Destination $SkillDest -Recurse -Force
+
+    # 复制二进制文件（区分平台子目录和平面结构）
+    $BinCopied = 0
+    $PlatformBinDir = Join-Path $Src "scripts/bin/$Platform"
+    $FlatBinDir = Join-Path $Src "scripts/bin"
+
+    if (Test-Path $PlatformBinDir) {
+        # 本地开发：bin 按平台子目录组织
+        Get-ChildItem -File $PlatformBinDir | ForEach-Object {
+            Copy-Item $_.FullName -Destination (Join-Path $SkillDest "scripts/bin/") -Force
+            $BinCopied++
+        }
+    } else {
+        # tarball：bin 是平面结构
+        Get-ChildItem -File $FlatBinDir -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item $_.FullName -Destination (Join-Path $SkillDest "scripts/bin/") -Force
+            $BinCopied++
+        }
+    }
+
+    if ($BinCopied -eq 0) {
+        Write-Host "    ⚠ 未找到 $Platform 的二进制文件（请先运行 make release）"
+    } else {
+        Write-Host "    ✅ 复制 $BinCopied 个二进制文件"
+        $Installed++
+    }
 }
 
 Write-Host ""
-Write-Host "✅ 安装完成！已安装 $($Skills.Count) 个 skills 到 $DestDir"
+if ($Installed -eq 0) {
+    Write-Host "⚠ 安装完成但缺少二进制文件。请先编译："
+    Write-Host ""
+    Write-Host "  cd $ScriptDir && make release"
+    Write-Host ""
+    Write-Host "然后重新运行 install.ps1"
+} else {
+    Write-Host "✅ 安装完成！已安装 $Installed/$($Skills.Count) 个 skills 到 $DestDir"
+}
 Write-Host ""
 Write-Host "下一步：配置凭证（任选一种方式）："
 Write-Host ""

@@ -37,3 +37,4 @@ toolkit/test/output/
 config.yaml
 *.pem
 *.key
+.codebuddy

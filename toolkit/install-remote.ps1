@@ -38,11 +38,32 @@ Write-Host ""
 # ============================================================
 # 下载安装包
 # ============================================================
-# 解析 latest 版本号
+# 解析 latest 版本号（优先 Releases API，回退到 Tags API）
 if ($Version -eq "latest") {
-    $ApiUrl = "https://api.github.com/repos/$GithubRepo/releases/latest"
-    $Release = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
-    $ResolvedVersion = $Release.tag_name -replace '^v', ''
+    $ResolvedVersion = ""
+
+    # 尝试 1：Releases API
+    try {
+        $ApiUrl = "https://api.github.com/repos/$GithubRepo/releases/latest"
+        $Release = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing -ErrorAction Stop
+        $ResolvedVersion = $Release.tag_name -replace '^v', ''
+    } catch {
+        # Releases API 失败（可能没有 Release）
+    }
+
+    # 尝试 2：Tags API
+    if (-not $ResolvedVersion) {
+        try {
+            $TagsUrl = "https://api.github.com/repos/$GithubRepo/tags?per_page=1"
+            $Tags = Invoke-RestMethod -Uri $TagsUrl -UseBasicParsing -ErrorAction Stop
+            if ($Tags -and $Tags.Count -gt 0) {
+                $ResolvedVersion = $Tags[0].name -replace '^v', ''
+            }
+        } catch {
+            # Tags API 也失败
+        }
+    }
+
     if (-not $ResolvedVersion) {
         Write-Error "无法获取最新版本号，请检查网络或指定 -Version <版本号>"
         exit 1

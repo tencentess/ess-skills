@@ -83,13 +83,14 @@ release-native: build
 	@echo "=== Packaging to skills/ ($(PLATFORM) only) ==="
 	@for dir in $(SUBDIRS); do \
 		echo "  → Packaging $$dir..."; \
-		mkdir -p $(SKILLS_DIR)/$$dir/scripts/bin/$(PLATFORM); \
 		cp $$dir/SKILL.md $(SKILLS_DIR)/$$dir/; \
 		cp $$dir/scripts/run.sh $(SKILLS_DIR)/$$dir/scripts/; \
 		chmod +x $(SKILLS_DIR)/$$dir/scripts/run.sh; \
 		if [ -f $$dir/scripts/run.ps1 ]; then \
 			cp $$dir/scripts/run.ps1 $(SKILLS_DIR)/$$dir/scripts/; \
 		fi; \
+		rm -rf $(SKILLS_DIR)/$$dir/scripts/bin; \
+		mkdir -p $(SKILLS_DIR)/$$dir/scripts/bin/$(PLATFORM); \
 		cp $$dir/bin/$(PLATFORM)/* $(SKILLS_DIR)/$$dir/scripts/bin/$(PLATFORM)/; \
 		find $(SKILLS_DIR)/$$dir/scripts/bin/$(PLATFORM) -type f -exec chmod +x {} \;; \
 	done
@@ -101,7 +102,7 @@ release-native: build
 TOOL ?= codebuddy
 TARGET ?= project
 install: release-native
-	@bash install.sh --tool=$(TOOL) --target=$(TARGET)
+	@cd .. && bash toolkit/install.sh --tool=$(TOOL) --target=$(TARGET)
 
 # 按平台拆分打包为 tsign-skills-{version}-{platform}.tar.gz
 # 用法: make package VERSION=1.0.0

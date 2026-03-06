@@ -120,17 +120,29 @@ download() {
 }
 
 # 解析版本号（latest → 实际版本号）
+# 优先查 Releases API，失败则回退到 Tags API
 resolve_version() {
   local ver="$1"
   if [ "$ver" = "latest" ]; then
-    local api_url="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
-    local downloader
+    local downloader tag=""
     downloader="$(detect_downloader)"
-    local tag
+
+    # 尝试 1：Releases API
+    local releases_url="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
     case "$downloader" in
-      curl) tag="$(curl -fsSL "$api_url" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//')" ;;
-      wget) tag="$(wget -qO- "$api_url" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//')" ;;
+      curl) tag="$(curl -fsSL "$releases_url" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//')" || true ;;
+      wget) tag="$(wget -qO- "$releases_url" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//')" || true ;;
     esac
+
+    # 尝试 2：Tags API（仓库有 tag 但没创建 Release 时）
+    if [ -z "$tag" ]; then
+      local tags_url="https://api.github.com/repos/${GITHUB_REPO}/tags?per_page=1"
+      case "$downloader" in
+        curl) tag="$(curl -fsSL "$tags_url" 2>/dev/null | grep '"name"' | head -1 | sed 's/.*"name": *"//;s/".*//')" || true ;;
+        wget) tag="$(wget -qO- "$tags_url" 2>/dev/null | grep '"name"' | head -1 | sed 's/.*"name": *"//;s/".*//')" || true ;;
+      esac
+    fi
+
     if [ -z "$tag" ]; then
       echo "❌ 无法获取最新版本号，请检查网络或指定 --version=<版本号>" >&2
       exit 1

@@ -13,9 +13,20 @@
 #   --target=personal  安装到个人/全局目录
 set -euo pipefail
 
-TOOLKIT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(dirname "$TOOLKIT_DIR")"
-SKILLS_SRC="${PROJECT_ROOT}/skills"
+# 脚本所在目录（本地开发时在 toolkit/，打包后在 tarball 根目录）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 自动检测 skills 源目录：
+#   打包产物：install.sh 与 contract-*/  同级
+#   本地开发：install.sh 在 toolkit/，skills 在 ../skills/
+if [ -d "${SCRIPT_DIR}/contract-atoms" ]; then
+  SKILLS_SRC="$SCRIPT_DIR"
+elif [ -d "${SCRIPT_DIR}/../skills" ]; then
+  SKILLS_SRC="$(cd "${SCRIPT_DIR}/../skills" && pwd)"
+else
+  echo "❌ 找不到 skills 目录，请在安装包解压目录或项目根目录下运行" >&2
+  exit 1
+fi
 TOOL="codebuddy"
 TARGET="project"
 

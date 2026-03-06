@@ -20,9 +20,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ToolkitDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Split-Path -Parent $ToolkitDir
-$SkillsSrc = Join-Path $ProjectRoot "skills"
+# 脚本所在目录（本地开发时在 toolkit/，打包后在 tarball 根目录）
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# 自动检测 skills 源目录
+if (Test-Path (Join-Path $ScriptDir "contract-atoms")) {
+    $SkillsSrc = $ScriptDir
+} elseif (Test-Path (Join-Path (Split-Path -Parent $ScriptDir) "skills")) {
+    $SkillsSrc = Join-Path (Split-Path -Parent $ScriptDir) "skills"
+} else {
+    Write-Error "找不到 skills 目录，请在安装包解压目录或项目根目录下运行"
+    exit 1
+}
 
 # 根据工具和目标确定安装路径
 switch ($Tool) {

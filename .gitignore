@@ -1,0 +1,39 @@
+# === 构建产物 ===
+dist/
+skills/*/scripts/bin/
+toolkit/*/bin/
+toolkit/contract-review/review-workflow
+toolkit/contract-comparison/compare-workflow
+toolkit/contract-atoms/contract-atoms
+
+# === Go ===
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# === IDE ===
+.idea/
+.vscode/
+*.iml
+
+# === 测试产物 ===
+toolkit/test/output/
+*.tmp
+
+# === 凭证（绝不提交） ===
+.tsign/
+config.yaml
+*.pem
+*.key

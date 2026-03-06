@@ -168,9 +168,9 @@ echo ""
 if [ "$INSTALLED" -eq 0 ]; then
   echo "⚠ 安装完成但缺少二进制文件。请先编译："
   echo ""
-  echo "  cd $(cd "$SCRIPT_DIR" && pwd) && make release"
+  echo "  cd $(cd "$SCRIPT_DIR/.." && pwd) && make install"
   echo ""
-  echo "然后重新运行 install.sh"
+  echo "make install 会自动编译当前平台并安装（无需全平台编译）"
 else
   echo "✅ 安装完成！已安装 ${INSTALLED}/${#SKILLS[@]} 个 skills 到 ${DEST_DIR}"
 fi

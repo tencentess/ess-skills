@@ -33,8 +33,22 @@ bash toolkit/install.sh --tool=claude
 
 No need to clone the repo — download and install directly:
 
+**macOS / Linux**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.sh | bash
+```
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.ps1 -OutFile install-remote.ps1; powershell -ExecutionPolicy Bypass -File .\install-remote.ps1
+```
+
+With parameters:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-remote.ps1 -Tool claude -Target personal
 ```
 
 ## Credential Setup
@@ -53,23 +67,49 @@ Three parameters are required to configure Tencent E-Sign credentials:
 
 ### Option 1: Configuration File (Recommended)
 
-Create `~/.tsign/config.yaml`:
+**macOS / Linux**: Create `~/.tsign/config.yaml`
 
-```yaml
+```bash
+mkdir -p ~/.tsign && cat > ~/.tsign/config.yaml << 'EOF'
 credentials:
   secret_id: "AKIDxxxxxxxx"
   secret_key: "xxxxxxxx"
 operator:
   user_id: "yDwJxxx"
 env: "online"
+EOF
+```
+
+**Windows (PowerShell)**: Create `%USERPROFILE%\.tsign\config.yaml`
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.tsign" | Out-Null
+@"
+credentials:
+  secret_id: "AKIDxxxxxxxx"
+  secret_key: "xxxxxxxx"
+operator:
+  user_id: "yDwJxxx"
+env: "online"
+"@ | Set-Content "$env:USERPROFILE\.tsign\config.yaml" -Encoding UTF8
 ```
 
 ### Option 2: Environment Variables
+
+**macOS / Linux (Bash)**
 
 ```bash
 export TENCENTCLOUD_SECRET_ID="AKIDxxxxxxxx"
 export TENCENTCLOUD_SECRET_KEY="xxxxxxxx"
 export ESS_OPERATOR_ID="yDwJxxx"
+```
+
+**Windows (PowerShell)**
+
+```powershell
+$env:TENCENTCLOUD_SECRET_ID="AKIDxxxxxxxx"
+$env:TENCENTCLOUD_SECRET_KEY="xxxxxxxx"
+$env:ESS_OPERATOR_ID="yDwJxxx"
 ```
 
 > If no credentials are detected, an interactive setup wizard will guide you. See [Credential Setup](./toolkit/references/credentials.md) for details.

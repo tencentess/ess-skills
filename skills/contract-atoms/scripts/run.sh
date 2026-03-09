@@ -38,13 +38,15 @@ CMD="$1"
 shift
 
 PLATFORM="$(detect_platform)"
-BIN="${SKILL_DIR}/bin/${PLATFORM}/${CMD}"
 
+# 查找可执行文件：优先安装后的扁平结构，再 fallback 到开发时的平台子目录
+BIN="${SCRIPT_DIR}/bin/${CMD}"
 if [ ! -f "$BIN" ]; then
-  echo "❌ 未找到可执行文件: bin/${PLATFORM}/${CMD}" >&2
+  BIN="${SCRIPT_DIR}/bin/${PLATFORM}/${CMD}"
+fi
+if [ ! -f "$BIN" ]; then
+  echo "❌ 未找到可执行文件: scripts/bin/${CMD} 或 scripts/bin/${PLATFORM}/${CMD}" >&2
   echo "   当前平台: ${PLATFORM}" >&2
-  echo "   可用平台:" >&2
-  ls -d "${SKILL_DIR}/bin"/*/ 2>/dev/null | xargs -I{} basename {} | sed 's/^/     /' >&2
   exit 1
 fi
 

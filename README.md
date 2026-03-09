@@ -34,8 +34,22 @@ bash toolkit/install.sh --tool=claude
 
 无需克隆仓库，直接下载安装：
 
+**macOS / Linux**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.sh | bash
+```
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.ps1 -OutFile install-remote.ps1; powershell -ExecutionPolicy Bypass -File .\install-remote.ps1
+```
+
+指定参数：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-remote.ps1 -Tool claude -Target personal
 ```
 
 ## 凭证配置
@@ -54,23 +68,49 @@ curl -fsSL https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/
 
 ### 方式一：配置文件（推荐）
 
-创建 `~/.tsign/config.yaml`：
+**macOS / Linux**：创建 `~/.tsign/config.yaml`
 
-```yaml
+```bash
+mkdir -p ~/.tsign && cat > ~/.tsign/config.yaml << 'EOF'
 credentials:
   secret_id: "AKIDxxxxxxxx"
   secret_key: "xxxxxxxx"
 operator:
   user_id: "yDwJxxx"
 env: "online"
+EOF
+```
+
+**Windows (PowerShell)**：创建 `%USERPROFILE%\.tsign\config.yaml`
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.tsign" | Out-Null
+@"
+credentials:
+  secret_id: "AKIDxxxxxxxx"
+  secret_key: "xxxxxxxx"
+operator:
+  user_id: "yDwJxxx"
+env: "online"
+"@ | Set-Content "$env:USERPROFILE\.tsign\config.yaml" -Encoding UTF8
 ```
 
 ### 方式二：环境变量
+
+**macOS / Linux (Bash)**
 
 ```bash
 export TENCENTCLOUD_SECRET_ID="AKIDxxxxxxxx"
 export TENCENTCLOUD_SECRET_KEY="xxxxxxxx"
 export ESS_OPERATOR_ID="yDwJxxx"
+```
+
+**Windows (PowerShell)**
+
+```powershell
+$env:TENCENTCLOUD_SECRET_ID="AKIDxxxxxxxx"
+$env:TENCENTCLOUD_SECRET_KEY="xxxxxxxx"
+$env:ESS_OPERATOR_ID="yDwJxxx"
 ```
 
 > 运行命令时若未检测到凭证，会自动引导创建。详见 [凭证配置说明](./toolkit/references/credentials.md)。

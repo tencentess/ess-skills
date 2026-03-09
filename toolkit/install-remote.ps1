@@ -2,7 +2,7 @@
 # 从 GitHub Releases 下载安装包并安装到 AI 编码工具的 skills 目录
 #
 # 快速安装:
-#   irm https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.ps1 | iex
+#   irm https://raw.githubusercontent.com/tencentess/ess-skills/main/toolkit/install-remote.ps1 -OutFile install-remote.ps1; powershell -ExecutionPolicy Bypass -File .\install-remote.ps1
 #
 # 用法:
 #   .\install-remote.ps1 [-Tool codebuddy] [-Target project] [-Version latest] [-BaseUrl <URL>]
@@ -38,32 +38,11 @@ Write-Host ""
 # ============================================================
 # 下载安装包
 # ============================================================
-# 解析 latest 版本号（优先 Releases API，回退到 Tags API）
+# 解析 latest 版本号
 if ($Version -eq "latest") {
-    $ResolvedVersion = ""
-
-    # 尝试 1：Releases API
-    try {
-        $ApiUrl = "https://api.github.com/repos/$GithubRepo/releases/latest"
-        $Release = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing -ErrorAction Stop
-        $ResolvedVersion = $Release.tag_name -replace '^v', ''
-    } catch {
-        # Releases API 失败（可能没有 Release）
-    }
-
-    # 尝试 2：Tags API
-    if (-not $ResolvedVersion) {
-        try {
-            $TagsUrl = "https://api.github.com/repos/$GithubRepo/tags?per_page=1"
-            $Tags = Invoke-RestMethod -Uri $TagsUrl -UseBasicParsing -ErrorAction Stop
-            if ($Tags -and $Tags.Count -gt 0) {
-                $ResolvedVersion = $Tags[0].name -replace '^v', ''
-            }
-        } catch {
-            # Tags API 也失败
-        }
-    }
-
+    $ApiUrl = "https://api.github.com/repos/$GithubRepo/releases/latest"
+    $Release = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
+    $ResolvedVersion = $Release.tag_name -replace '^v', ''
     if (-not $ResolvedVersion) {
         Write-Error "无法获取最新版本号，请检查网络或指定 -Version <版本号>"
         exit 1

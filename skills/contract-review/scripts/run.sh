@@ -31,6 +31,9 @@ if [ ! -f "$BIN" ]; then
   BIN="${SCRIPT_DIR}/bin/${PLATFORM}/${CMD}"
 fi
 if [ ! -f "$BIN" ]; then
+  BIN="${SKILL_DIR}/bin/${PLATFORM}/${CMD}"
+fi
+if [ ! -f "$BIN" ]; then
   echo "❌ 未找到可执行文件: scripts/bin/${CMD} 或 scripts/bin/${PLATFORM}/${CMD}" >&2
   echo "   当前平台: ${PLATFORM}" >&2
   exit 1

@@ -28,7 +28,9 @@ foreach ($candidate in @(
     (Join-Path $ScriptDir "bin" "$Command.exe"),
     (Join-Path $ScriptDir "bin" $Command),
     (Join-Path $ScriptDir "bin" $Platform "$Command.exe"),
-    (Join-Path $ScriptDir "bin" $Platform $Command)
+    (Join-Path $ScriptDir "bin" $Platform $Command),
+    (Join-Path $SkillDir "bin" $Platform "$Command.exe"),
+    (Join-Path $SkillDir "bin" $Platform $Command)
 )) {
     if (Test-Path $candidate) { $Bin = $candidate; break }
 }
